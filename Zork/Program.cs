@@ -56,11 +56,11 @@ namespace Zork
             bool movedSuccessfully = true;
             switch (command)
             {
-                case Commands.NORTH when Location.Row > 0:
+                case Commands.SOUTH when Location.Row > 0:
                     Location.Row--;
                     break;
 
-                case Commands.SOUTH when Location.Row < Rooms.GetLength(0) - 1:
+                case Commands.NORTH when Location.Row < Rooms.GetLength(0) - 1:
                     Location.Row++;
                     break;
 
