@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace Zork
 {
@@ -18,8 +19,9 @@ namespace Zork
         {
             Console.WriteLine("Welcome to Zork!");
 
-            string roomsFilename = args.Length > 0 ? args[0] : "Rooms.txt";
-            InitializeRoomDescriptions(roomsFilename);
+            const string defaultRoomsFilename = "Rooms.Json";
+            string roomsFilename = (args.Length > 0 ? args[(int)CommandLineArguments.RoomsFilename] : defaultRoomsFilename);
+            InitializeRooms(roomsFilename);
 
             Room previousRoom = null;
             Commands command = Commands.UNKNOWN;
@@ -95,38 +97,10 @@ namespace Zork
 
         private static Commands ToCommand(string commandString) => Enum.TryParse(commandString, true, out Commands result) ? result : Commands.UNKNOWN;
 
-        private static void InitializeRoomDescriptions(string roomsFilename)
-        {
-            Dictionary<string, Room> roomMap = new Dictionary<string, Room>();
-            foreach(Room room in Rooms)
-            {
-                roomMap[room.Name] = room;
-            }
+        private static void InitializeRooms(string roomsFilename) =>
+            Rooms = JsonConvert.DeserializeObject<Room[,]>(File.ReadAllText(roomsFilename));
 
-            string[] lines = File.ReadAllLines(roomsFilename);
-            foreach (string line in lines)
-            {
-                const string fieldDelimiter = "##";
-                const int expectedFieldCount = 2;
-
-                string[] fields = line.Split(fieldDelimiter);
-                if(fields.Length != expectedFieldCount)
-                {
-                    throw new InvalidDataException("Invalid record.");
-                }
-
-                string name = fields[(int)Fields.Name];
-                string description = fields[(int)Fields.Description];
-
-                roomMap[name].Description = description;
-            }
-        }
-
-        private static readonly Room[,] Rooms = {
-            {new Room ("Rocky Trail"),  new Room ("South of House"),    new Room ("Canyon View")    },
-            {new Room ("Forest"),       new Room ("West of House"),     new Room ("Behind House")   },
-            {new Room ("Dense Woods"),  new Room ("North of House"),    new Room ("Clearing")       }
-        };                              
+        private static Room[,] Rooms;                           
 
         private static readonly List<Commands> Directions = new List<Commands>
         {
@@ -136,10 +110,9 @@ namespace Zork
             Commands.WEST
         };
 
-        private enum Fields
+        private enum CommandLineArguments
         {
-            Name = 0,
-            Description = 1
+            RoomsFilename = 0
         }
 
         private static (int Row, int Column) Location = (1, 1);
